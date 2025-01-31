@@ -1,5 +1,5 @@
 /*
-	"rage_movespeed"	// Ability name can use suffixes
+	"rage_movespeed"	                                // Ability name can use suffixes
 	{
 		"slot"					"0"						// Ability slot
 		"duration"				"10.0"					// Ability duration
@@ -8,11 +8,12 @@
 		"allyrange"				"768.0"					// Ally range
 		"enemyspeed"			"225.0"					// Enemy move speed
 		"enemyrange"			"768.0"					// Enemy range
-		"plugin_name"	"ff2r_movespeed"
+		
+		"plugin_name"	        "ff2r_movespeed"
 	}
 	
 	// Future Project - from halloween_2014
-	"special_proportional_speed"		// Ability name can't use suffixes, no multiple instances
+	"special_proportional_speed"		        // Ability name can't use suffixes, no multiple instances
 	{
 		"slot"					"0"				// Ability slot (This ability works passively)
 		"enemyspeed ratio"		"0.6"			// Speed Ratio		
@@ -20,7 +21,7 @@
 		"allyspeed ratio"		"1.25"			// Speed Ratio		
 		"allyrange"				"512.0"			// Ally range (Self is Excluded)
 		
-		"plugin_name"	"ff2r_movespeed"
+		"plugin_name"	        "ff2r_movespeed"
 	}
 	
 */
@@ -40,19 +41,17 @@
 #pragma semicolon 1
 #pragma newdecls required
 
-#define PLUGIN_NAME 	"Freak Fortress 2 Rewrite: My Stock Subplugin"
-#define PLUGIN_AUTHOR 	"J0BL3SS"
-#define PLUGIN_DESC 	"It's a template ff2r subplugin"
+#define PLUGIN_NAME     "Freak Fortress 2 Rewrite: My Stock Subplugin"
+#define PLUGIN_AUTHOR   "J0BL3SS"
+#define PLUGIN_DESC     "Subplugin for applying speed on players"
 
-#define MAJOR_REVISION 	"1"
-#define MINOR_REVISION 	"0"
+#define MAJOR_REVISION  "1"
+#define MINOR_REVISION  "0"
 #define STABLE_REVISION "0"
 #define PLUGIN_VERSION 	MAJOR_REVISION..."."...MINOR_REVISION..."."...STABLE_REVISION
 
-#define PLUGIN_URL ""
-
-#define MAXTF2PLAYERS	36
-#define INACTIVE 100000000.0
+#define MAXTF2PLAYERS   MAXPLAYERS+1
+#define INACTIVE        100000000.0
 
 float MS_SelfMoveSpeed[MAXTF2PLAYERS];
 
@@ -68,18 +67,7 @@ public Plugin myinfo =
 	author 		= PLUGIN_AUTHOR,
 	description	= PLUGIN_DESC,
 	version 	= PLUGIN_VERSION,
-	url			= PLUGIN_URL,
 };
-
-public void OnPluginStart()
-{	
-	//
-}
-
-public void OnClientPutInServer(int clientIdx)
-{
-	//
-}
 
 public void OnPluginEnd()
 {

@@ -58,8 +58,6 @@
 		"do slot after low"		""		// Do an ability when teleportation succesfull, low slot
 		"do slot after high"	""		// Do an ability when teleportation succesfull, high slot
 		
-		
-		
 		"plugin_name"	"ff2r_special_mobility"	// This subplugin name
 	}
 	
@@ -95,7 +93,6 @@
 
 #define PLUGIN_NAME 	"Freak Fortress 2 Rewrite: Special Mobility"
 #define PLUGIN_AUTHOR 	"J0BL3SS"
-#define PLUGIN_OWNER	""
 #define PLUGIN_DESC 	"Dash, Directional Dash, Point Teleport & More"
 
 #define MAJOR_REVISION 	"1"
@@ -103,9 +100,7 @@
 #define STABLE_REVISION "3"
 #define PLUGIN_VERSION 	MAJOR_REVISION..."."...MINOR_REVISION..."."...STABLE_REVISION
 
-#define PLUGIN_URL 		""
-
-#define MAXTF2PLAYERS	36
+#define MAXTF2PLAYERS	MAXPLAYERS+1
 #define NOPE_AVI 		"vo/engineer_no01.mp3"
 #define AB_DENYUSE		"common/wpn_denyselect.wav"
 
@@ -138,7 +133,6 @@ public Plugin myinfo =
 	author 		= PLUGIN_AUTHOR,
 	description	= PLUGIN_DESC,
 	version 	= PLUGIN_VERSION,
-	url			= PLUGIN_URL,
 };
 
 public void OnPluginStart()

@@ -1,29 +1,32 @@
 /*
-	"rage_custom_melee"
-	{	
-		"slot"					"0"								// Ability slot
-		"classname"				"tf_weapon_knife"				// Weapon classname
-		"attributes"			"2 ; 3.0 ; 6 ; 0.5 ; 37 ; 0.0"	// Weapon attributes (Values can be formulas)
-		"index"					"1005"							// Weapon index
-		"level"					"101"							// Weapon level
-		"quality"				"5"								// Weapon quality
-		"preserve"				"false"							// Preserve weapon attributes
-		"rank"					"19"							// Weapon strange rank
-		"show"					"true"							// Weapon visibility
-		"worldmodel"			""								// Weapon worldmodel
-		"alpha"					"255"							// Weapon alpha
-		"red"					"255"							// Weapon red
-		"green"					"255"							// Weapon green
-		"blue"					"255"							// Weapon blue
-		"class"					""								// Override class setup
+	"rage_apply_wearables"		// Ability name can use suffixes
+	{
+		"slot"					"0"			// Ability slot
+		"clear wearables"		"true"		// Clear current wearables
 		
-		"weapon duration"		"5.0"							// Duration before weapon decays
-		"remove on hit"			"true"							// Remove weapon upon landing a hit
+		"wearables"				// Up to 20 wearables
+		{
+			"wearable1"
+			{
+				"index"			"486"		// Cosmetic index
+				"show"			"true"		// Show wearable
+				"attributes"	""			// Attributes
+				"level"			"99"		// Level
+				"quality"		"2"			// Quality
+				"rank"			"5"			// Strange rank
+			}
+			"wearable2"
+			{
+				"index"			"942"		// Cosmetic index
+				"show"			"true"		// Show wearable
+				"attributes"	""			// Attributes
+				"level"			"99"		// Level
+				"quality"		"2"			// Quality
+				"rank"			"5"			// Strange rank
+			}
+		}
 		
-		"do slot on hit low"	"11"					        // Activate a slot upon landing a hit
-		"do slot on hit high"	"11"					        // Activate a slot upon landing a hit
-		
-		"plugin_name"	        "ff2r_customized_melee"
+		"plugin_name"			"ff2r_special_wearable"
 	}
 */
 
@@ -44,25 +47,28 @@
 #pragma semicolon 1
 #pragma newdecls required
 
-#define PLUGIN_NAME 	"Freak Fortress 2 Rewrite: Custom Melee"
+#define PLUGIN_NAME 	"Freak Fortress 2 Rewrite: Special Wearable"
 #define PLUGIN_AUTHOR 	"J0BL3SS"
-#define PLUGIN_DESC 	"Melee weapon with customization"
+#define PLUGIN_DESC 	"Applying On Boss Wearable"
 
 #define MAJOR_REVISION 	"1"
 #define MINOR_REVISION 	"0"
-#define STABLE_REVISION "3"
+#define STABLE_REVISION "1"
 #define PLUGIN_VERSION 	MAJOR_REVISION..."."...MINOR_REVISION..."."...STABLE_REVISION
 
 #define MAXTF2PLAYERS	MAXPLAYERS+1
 
+Handle SDKEquipWearable;
 int PlayersAlive[4];
 bool SpecTeam;
 ConVar CvarFriendlyFire;
-bool CanHit[MAXTF2PLAYERS] = { false, ... };
-ConfigData Ability_Data[MAXTF2PLAYERS];
-int WeaponEnt[MAXTF2PLAYERS];
 
+#define TF2U_LIBRARY	"nosoop_tf2utils"
 #define TCA_LIBRARY		"tf2custattr"
+
+#if defined __nosoop_tf2_utils_included
+bool TF2ULoaded;
+#endif
 
 #if defined __tf_custom_attributes_included
 bool TCALoaded;
@@ -77,7 +83,14 @@ public Plugin myinfo =
 };
 
 public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max)
-{	
+{
+	#if defined __nosoop_tf2_utils_included
+	MarkNativeAsOptional("TF2Util_GetPlayerWearableCount");
+	MarkNativeAsOptional("TF2Util_GetPlayerWearable");
+	MarkNativeAsOptional("TF2Util_GetPlayerMaxHealthBoost");
+	MarkNativeAsOptional("TF2Util_EquipPlayerWearable");
+	#endif
+	
 	#if defined __tf_custom_attributes_included
 	MarkNativeAsOptional("TF2CustAttr_SetString");
 	#endif
@@ -87,32 +100,31 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
 public void OnPluginStart()
 {
 	CvarFriendlyFire = FindConVar("mp_friendlyfire");
-
-	for(int clientIdx = 1; clientIdx <= MaxClients; clientIdx++)
-	{		
-		if(IsValidClient(clientIdx))
-		{
-			OnClientPutInServer(clientIdx);
-		}
-	}
+	
+	#if defined __nosoop_tf2_utils_included
+	TF2ULoaded = LibraryExists(TF2U_LIBRARY);
+	#endif
+	
+	GameData gamedata = new GameData("sm-tf2.games");
+	
+	StartPrepSDKCall(SDKCall_Player);
+	PrepSDKCall_SetVirtual(gamedata.GetOffset("RemoveWearable") - 1);
+	PrepSDKCall_AddParameter(SDKType_CBaseEntity, SDKPass_Pointer);
+	SDKEquipWearable = EndPrepSDKCall();
+	if(!SDKEquipWearable)
+		LogError("[Gamedata] Could not find RemoveWearable");
+	
+	delete gamedata;
 }
 
-public void OnPluginEnd()
-{
-	for(int clientIdx = 1; clientIdx <= MaxClients; clientIdx++)
-	{		
-		CanHit[clientIdx] = false;
-		SDKUnhook(clientIdx, SDKHook_OnTakeDamage, Wep_OnTakeDamage);
-	}
-}
-
-public void OnClientPutInServer(int clientIdx)
-{
-	SDKHook(clientIdx, SDKHook_OnTakeDamage, Wep_OnTakeDamage);
-}
 
 public void OnLibraryAdded(const char[] name)
 {
+	#if defined __nosoop_tf2_utils_included
+	if(!TF2ULoaded && StrEqual(name, TF2U_LIBRARY))
+		TF2ULoaded = true;
+	#endif
+	
 	#if defined __tf_custom_attributes_included
 	if(!TCALoaded && StrEqual(name, TCA_LIBRARY))
 		TCALoaded = true;
@@ -121,6 +133,10 @@ public void OnLibraryAdded(const char[] name)
 
 public void OnLibraryRemoved(const char[] name)
 {
+	#if defined __nosoop_tf2_utils_included
+	if(TF2ULoaded && StrEqual(name, TF2U_LIBRARY))
+		TF2ULoaded = false;
+	#endif
 	
 	#if defined __tf_custom_attributes_included
 	if(TCALoaded && StrEqual(name, TCA_LIBRARY))
@@ -128,115 +144,45 @@ public void OnLibraryRemoved(const char[] name)
 	#endif
 }
 
-public Action Wep_OnTakeDamage(int victim, int &attacker, int &inflictor, float &damage, int &damagetype, int &weapon, float damageForce[3], float damagePosition[3])
-{
-	if(IsValidClient(victim) && IsValidClient(attacker) && victim != attacker)
-	{
-		if(CanHit[attacker])
-		{
-			CanHit[attacker] = false;
-			
-			CreateTimer(0.1, Timer_RestoreWeapon, GetClientUserId(attacker), TIMER_FLAG_NO_MAPCHANGE);
-			
-			if(Ability_Data[attacker])
-			{
-				int slot = Ability_Data[attacker].GetInt("do slot on hit high", Ability_Data[attacker].GetInt("do slot on hit low"));
-				FF2R_DoBossSlot(attacker, Ability_Data[attacker].GetInt("do slot on hit low", slot), slot);
-			}
-		}
-	}
-	return Plugin_Continue;
-}
-
-public Action Timer_RestoreWeapon(Handle timer, int userid)
-{
-	int attacker = GetClientOfUserId(userid);
-	if(attacker && IsValidClient(attacker) && IsPlayerAlive(attacker) && IsValidEntity(WeaponEnt[attacker]) && WeaponEnt[attacker] != -1)
-	{
-		BossData boss = FF2R_GetBossData(attacker);
-		if(boss)
-		{
-			if(WeaponEnt[attacker] == GetPlayerWeaponSlot(attacker, TFWeaponSlot_Melee))
-			{
-				char buffer[64];
-				for(int i = 0; i <= 16; i++)
-				{
-					GetConfigWeapon(i, buffer, sizeof(buffer));
-					ConfigData wep = boss.GetSection(buffer);
-					if(wep)
-						Rage_NewWeapon(attacker, wep, buffer, false);
-					
-				}
-				
-				boss.GetString("class", buffer, sizeof(buffer));
-				
-				TFClassType forceClass = GetClassOfName(buffer);
-				if(forceClass != TFClass_Unknown && forceClass != TF2_GetPlayerClass(attacker))
-				{
-					TF2_SetPlayerClass(attacker, forceClass, _, false);
-				}
-				
-				WeaponEnt[attacker] = -1;
-			}
-		}
-	}
-	
-	return Plugin_Continue;
-}
-
-public void GetConfigWeapon(int count, char[] buffer, int maxlenght)
-{
-	switch(count)
-	{
-		case 1: Format(buffer, maxlenght, "tf_weapon_bat");
-		case 2: Format(buffer, maxlenght, "tf_weapon_bat_fish");
-		case 3: Format(buffer, maxlenght, "tf_weapon_bat_giftwrap");
-		case 4: Format(buffer, maxlenght, "tf_weapon_bat_wood");
-		case 5: Format(buffer, maxlenght, "tf_weapon_katana");
-		case 6: Format(buffer, maxlenght, "tf_weapon_breakable_sign");
-		case 7: Format(buffer, maxlenght, "tf_weapon_slap");
-		case 8: Format(buffer, maxlenght, "tf_weapon_bottle");
-		case 9: Format(buffer, maxlenght, "tf_weapon_sword");
-		case 10: Format(buffer, maxlenght, "tf_weapon_stickbomb");
-		case 11: Format(buffer, maxlenght, "tf_weapon_fists");
-		case 12: Format(buffer, maxlenght, "tf_weapon_wrench");
-		case 13: Format(buffer, maxlenght, "tf_weapon_roboarm");
-		case 14: Format(buffer, maxlenght, "tf_weapon_bonesaw");
-		case 15: Format(buffer, maxlenght, "tf_weapon_fireaxe");
-		case 16: Format(buffer, maxlenght, "tf_weapon_club");
-		default: Format(buffer, maxlenght, "tf_weapon_knife");
-	}
-}
-
-public void FF2R_OnBossRemoved(int clientIdx)
-{
-	CanHit[clientIdx] = false;
-}
-
 public void FF2R_OnAbility(int clientIdx, const char[] ability, AbilityData cfg)
 {
+	//Just your classic stuff, when boss raged:
 	if(!cfg.IsMyPlugin())	// Incase of duplicated ability names with different plugins in boss config
 		return;
 		
 	if(!cfg.GetBool("enabled", true))	// hidden/internal bool for abilities
 		return;
 	
-	if(!StrContains(ability, "rage_custom_melee", false))	// We want to use subffixes
+	if(!StrContains(ability, "rage_apply_wearables", false))	// We want to use subffixes
 	{
-		Rage_NewWeapon(clientIdx, cfg, ability);
+		ApplyWearables(clientIdx, ability, cfg);
 	}
 }
 
-void Rage_NewWeapon(int client, ConfigData cfg, const char[] ability, bool reset = true)
+public void ApplyWearables(int clientIdx, const char[] ability_name, AbilityData ability)
+{	
+	if(ability.GetBool("clear wearables", true))
+		TF2_RemoveCosmetics(clientIdx);
+		
+	ConfigData wearables = ability.GetSection("wearables");
+	
+	for(int i = 1; i <= 20; i++)
+	{
+		char buffer[12];
+		Format(buffer, sizeof(buffer), "wearable%i", i);
+		ConfigData wearable = wearables.GetSection(buffer);
+		NewWeapon(clientIdx, wearable, ability_name);
+	}
+}
+
+void NewWeapon(int client, ConfigData cfg, const char[] ability)
 {
 	static char classname[36], attributes[2048];
 	if(!cfg.GetString("classname", classname, sizeof(classname)))
-		cfg.GetString("name", classname, sizeof(classname), ability);
+		if(!cfg.GetString("name", classname, sizeof(classname)))
+			classname = "tf_wearable";
 	
 	cfg.GetString("attributes", attributes, sizeof(attributes));
-	
-	TFClassType class = TF2_GetPlayerClass(client);
-	GetClassWeaponClassname(class, classname, sizeof(classname));
 	bool wearable = StrContains(classname, "tf_weap") != 0;
 	
 	if(!wearable)
@@ -252,26 +198,18 @@ void Rage_NewWeapon(int client, ConfigData cfg, const char[] ability, bool reset
 	int index = cfg.GetInt("index");
 	int level = cfg.GetInt("level", -1);
 	int quality = cfg.GetInt("quality", 5);
-	bool preserve = cfg.GetBool("preserve");
 	
 	int kills = cfg.GetInt("rank", -99);
 	if(kills == -99 && level == -1)
 		kills = GetURandomInt() % 21;
 	
 	if(kills >= 0)
-		kills = GetKillsOfWeaponRank(kills, index);
+		kills = wearable ? GetKillsOfCosmeticRank(kills, index) : GetKillsOfWeaponRank(kills, index);
 	
 	if(level < 0 || level > 127)
 		level = 101;
 	
 	static char buffers[40][256];
-	
-	TFClassType forceClass;
-	if(cfg.GetString("class", buffers[0], sizeof(buffers[])))
-		forceClass = GetClassOfName(buffers[0]);
-	
-	if(forceClass != TFClass_Unknown)
-		TF2_SetPlayerClass(client, forceClass, _, false);
 	
 	int count = ExplodeString(attributes, " ; ", buffers, sizeof(buffers), sizeof(buffers));
 	
@@ -284,7 +222,7 @@ void Rage_NewWeapon(int client, ConfigData cfg, const char[] ability, bool reset
 	if(wearable)
 	{
 		entity = CreateEntityByName(classname);
-		if(IsValidEntity(entity))
+		if(entity != -1)
 		{
 			SetEntProp(entity, Prop_Send, "m_iItemDefinitionIndex", index);
 			SetEntProp(entity, Prop_Send, "m_bInitialized", true);
@@ -293,44 +231,24 @@ void Rage_NewWeapon(int client, ConfigData cfg, const char[] ability, bool reset
 			
 			DispatchSpawn(entity);
 		}
+		/*
 		else
 		{
 			FF2R_GetBossData(client).GetString("filename", buffers[0], sizeof(buffers[]));
 			LogError("[Boss] Invalid classname '%s' for '%s' in '%s'", classname, buffers[0], ability);
-		}
-	}
-	else
-	{
-		Handle item = TF2Items_CreateItem(preserve ? (OVERRIDE_ALL|FORCE_GENERATION|PRESERVE_ATTRIBUTES) : (OVERRIDE_ALL|FORCE_GENERATION));
-		TF2Items_SetClassname(item, classname);
-		TF2Items_SetItemIndex(item, index);
-		TF2Items_SetLevel(item, level);
-		TF2Items_SetQuality(item, quality);
-		TF2Items_SetNumAttributes(item, count/2 > 14 ? 15 : count/2);
-		for(level = 0; attribs < count && level < 16; attribs += 2)
-		{
-			int attrib = StringToInt(buffers[attribs]);
-			if(attrib)
-			{
-				TF2Items_SetAttribute(item, level++, attrib, ParseFormula(buffers[attribs+1], alive));
-			}
-			else
-			{
-				FF2R_GetBossData(client).Get("filename", attributes, sizeof(attributes));
-				LogError("[Boss] Bad weapon attribute passed for '%s' on '%s': %s ; %s in '%s'", attributes, classname, buffers[attribs], buffers[attribs+1], ability);
-			}
-		}
-		
-		entity = TF2Items_GiveNamedItem(client, item);
-		delete item;
+		}*/
 	}
 	
 	if(entity != -1)
 	{
-		EquipPlayerWeapon(client, entity);
-		
-		if(forceClass != TFClass_Unknown)
-			TF2_SetPlayerClass(client, class, _, false);
+		if(wearable)
+		{
+			EquipPlayerWearable(client, entity);
+		}
+		else
+		{
+			EquipPlayerWeapon(client, entity);
+		}
 		
 		for(; attribs < count; attribs += 2)
 		{
@@ -356,7 +274,11 @@ void Rage_NewWeapon(int client, ConfigData cfg, const char[] ability, bool reset
 		#endif
 		
 		if(kills >= 0)
+		{
 			TF2Attrib_SetByDefIndex(entity, 214, view_as<float>(kills));
+			if(wearable)
+				TF2Attrib_SetByDefIndex(entity, 454, view_as<float>(64));
+		}
 		
 		if(cfg.GetBool("show", true))
 		{
@@ -404,7 +326,7 @@ void Rage_NewWeapon(int client, ConfigData cfg, const char[] ability, bool reset
 		
 		if(!wearable)
 		{
-			if(cfg.GetBool("force switch", true))
+			if(cfg.GetBool("force switch"))
 			{
 				SetEntPropEnt(client, Prop_Send, "m_hActiveWeapon", entity);
 			}
@@ -413,42 +335,55 @@ void Rage_NewWeapon(int client, ConfigData cfg, const char[] ability, bool reset
 				FakeClientCommand(client, "use %s", classname);
 			}
 		}
+	}
+}
 
-		if(cfg.GetBool("remove on hit", true) && reset)
-			CanHit[client] = true;
-		
-		Ability_Data[client] = cfg;
-		WeaponEnt[client] = entity;
-		
-		if(cfg.GetFloat("weapon duration", 0.0) > 0.0)
-		{
-			CreateTimer(cfg.GetFloat("weapon duration"), Timer_RestoreWeapon, GetClientUserId(client), TIMER_FLAG_NO_MAPCHANGE);
-		}
-		
- 		int victims;
-		int[] victim = new int[MaxClients - 1];
-		for(int target = 1; target <= MaxClients; target++)
-		{
-			if(IsValidClient(target))
-			{	
-				victim[victims++] = target;
-			}
-		}
-		
-		if(victims)
-		{
-			char buffer[128];
-			Format(buffer, sizeof(buffer), "sound_hit_%s", ability);
-			FF2R_EmitBossSound(victim, victims, buffer, client);
-		}		
-	}
-	
-	if(forceClass != TFClass_Unknown)
+public void FF2R_OnAliveChanged(const int alive[4], const int total[4])
+{
+	for(int i; i < 4; i++)
 	{
-		TF2_SetPlayerClass(client, forceClass, _, false);
+		PlayersAlive[i] = alive[i];
 	}
 	
-	//return entity;
+	SpecTeam = (total[TFTeam_Unassigned] || total[TFTeam_Spectator]);
+}
+
+int GetTotalPlayersAlive(int team = -1)
+{
+	int amount;
+	for(int i = SpecTeam ? 0 : 2; i < sizeof(PlayersAlive); i++)
+	{
+		if(i != team)
+			amount += PlayersAlive[i];
+	}
+	
+	return amount;
+}
+
+void EquipPlayerWearable(int client, int entity)
+{
+	#if defined __nosoop_tf2_utils_included
+	if(TF2ULoaded)
+	{
+		TF2Util_EquipPlayerWearable(client, entity);
+	}
+	else
+	#endif
+	{
+		SDKCall_EquipWearable(client, entity);
+	}
+}
+
+void SDKCall_EquipWearable(int client, int entity)
+{
+	if(SDKEquipWearable)
+	{
+		SDKCall(SDKEquipWearable, client, entity);
+	}
+	else
+	{
+		RemoveEntity(entity);
+	}
 }
 
 int TF2_GetClassnameSlot(const char[] classname, bool econ = false)
@@ -523,51 +458,6 @@ int TF2_GetClassnameSlot(const char[] classname, bool econ = false)
 	}
 	return TFWeaponSlot_Melee;
 }
-
-public void FF2R_OnAliveChanged(const int alive[4], const int total[4])
-{
-	for(int i; i < 4; i++)
-	{
-		PlayersAlive[i] = alive[i];
-	}
-	
-	SpecTeam = (total[TFTeam_Unassigned] || total[TFTeam_Spectator]);
-}
-
-int GetTotalPlayersAlive(int team = -1)
-{
-	int amount;
-	for(int i = SpecTeam ? 0 : 2; i < sizeof(PlayersAlive); i++)
-	{
-		if(i != team)
-			amount += PlayersAlive[i];
-	}
-	
-	return amount;
-}
-
-#if defined __tf_custom_attributes_included
-void ApplyCustomAttributes(int entity, ConfigData cfg)
-{
-	StringMapSnapshot snap = cfg.Snapshot();
-	
-	int entries = snap.Length;
-	for(int i; i < entries; i++)
-	{
-		int length = snap.KeyBufferSize(i) + 1;
-		
-		char[] key = new char[length];
-		snap.GetKey(i, key, length);
-		
-		static PackVal attribute;	
-		cfg.GetArray(key, attribute, sizeof(attribute));
-		if(attribute.tag == KeyValType_Value)
-			TF2CustAttr_SetString(entity, key, attribute.data);
-	}
-	
-	delete snap;
-}
-#endif
 
 int GetKillsOfWeaponRank(int rank = -1, int index = 0)
 {
@@ -699,30 +589,370 @@ int GetKillsOfWeaponRank(int rank = -1, int index = 0)
 	}
 }
 
-TFClassType GetClassOfName(const char[] buffer)
+#if defined __tf_custom_attributes_included
+void ApplyCustomAttributes(int entity, ConfigData cfg)
 {
-	TFClassType class = view_as<TFClassType>(StringToInt(buffer));
-	if(class == TFClass_Unknown)
-		class = TF2_GetClass(buffer);
+	StringMapSnapshot snap = cfg.Snapshot();
 	
-	return class;
+	int entries = snap.Length;
+	for(int i; i < entries; i++)
+	{
+		int length = snap.KeyBufferSize(i) + 1;
+		
+		char[] key = new char[length];
+		snap.GetKey(i, key, length);
+		
+		static PackVal attribute;	
+		cfg.GetArray(key, attribute, sizeof(attribute));
+		if(attribute.tag == KeyValType_Value)
+			TF2CustAttr_SetString(entity, key, attribute.data);
+	}
+	
+	delete snap;
+}
+#endif
+
+int GetKillsOfCosmeticRank(int rank = -1, int index = 0)
+{
+	switch(rank)
+	{
+		case 0:
+		{
+			if(index == 133 || index == 444 || index == 655)	// Gunboats, Mantreads, or Spirit of Giving
+			{
+				return 0;
+			}
+			else
+			{
+				return GetRandomInt(0, 14);
+			}
+		}
+		case 1:
+		{
+			if(index == 133 || index == 444 || index == 655)	// Gunboats, Mantreads, or Spirit of Giving
+			{
+				return GetRandomInt(1, 2);
+			}
+			else
+			{
+				return GetRandomInt(15, 29);
+			}
+		}
+		case 2:
+		{
+			if(index == 133 || index == 444)	// Gunboats or Mantreads
+			{
+				return GetRandomInt(3, 4);
+			}
+			else if(index == 655)	// Spirit of Giving
+			{
+				return GetRandomInt(3, 6);
+			}
+			else
+			{
+				return GetRandomInt(30, 49);
+			}
+		}
+		case 3:
+		{
+			if(index == 133 || index == 444)	// Gunboats or Mantreads
+			{
+				return GetRandomInt(5, 6);
+			}
+			else if(index == 655)	// Spirit of Giving
+			{
+				return GetRandomInt(7, 11);
+			}
+			else
+			{
+				return GetRandomInt(50, 74);
+			}
+		}
+		case 4:
+		{
+			if(index == 133 || index == 444)	// Gunboats or Mantreads
+			{
+				return GetRandomInt(7, 9);
+			}
+			else if(index == 655)	// Spirit of Giving
+			{
+				return GetRandomInt(12, 19);
+			}
+			else
+			{
+				return GetRandomInt(75, 99);
+			}
+		}
+		case 5:
+		{
+			if(index == 133 || index == 444)	// Gunboats or Mantreads
+			{
+				return GetRandomInt(10, 13);
+			}
+			else if(index == 655)	// Spirit of Giving
+			{
+				return GetRandomInt(20, 27);
+			}
+			else
+			{
+				return  GetRandomInt(100, 134);
+			}
+		}
+		case 6:
+		{
+			if(index == 133 || index == 444)	// Gunboats or Mantreads
+			{
+				return GetRandomInt(14, 17);
+			}
+			else if(index == 655)	// Spirit of Giving
+			{
+				return GetRandomInt(28, 36);
+			}
+			else
+			{
+				return GetRandomInt(135, 174);
+			}
+		}
+		case 7:
+		{
+			if(index == 133 || index == 444)	// Gunboats or Mantreads
+			{
+				return GetRandomInt(18, 22);
+			}
+			else if(index == 655)	// Spirit of Giving
+			{
+				return GetRandomInt(37, 46);
+			}
+			else
+			{
+				return GetRandomInt(175, 249);
+			}
+		}
+		case 8:
+		{
+			if(index == 133 || index == 444)	// Gunboats or Mantreads
+			{
+				return GetRandomInt(23, 27);
+			}
+			else if(index == 655)	// Spirit of Giving
+			{
+				return GetRandomInt(47, 56);
+			}
+			else
+			{
+				return GetRandomInt(250, 374);
+			}
+		}
+		case 9:
+		{
+			if(index == 133 || index == 444)	// Gunboats or Mantreads
+			{
+				return GetRandomInt(28, 34);
+			}
+			else if(index == 655)	// Spirit of Giving
+			{
+				return GetRandomInt(57, 67);
+			}
+			else
+			{
+				return GetRandomInt(375, 499);
+			}
+		}
+		case 10:
+		{
+			if(index == 133 || index == 444)	// Gunboats or Mantreads
+			{
+				return GetRandomInt(35, 49);
+			}
+			else if(index == 655)	// Spirit of Giving
+			{
+				return GetRandomInt(68, 78);
+			}
+			else
+			{
+				return GetRandomInt(500, 724);
+			}
+		}
+		case 11:
+		{
+			if(index == 133 || index == 444)	// Gunboats or Mantreads
+			{
+				return GetRandomInt(50, 74);
+			}
+			else if(index == 655)	// Spirit of Giving
+			{
+				return GetRandomInt(79, 90);
+			}
+			else
+			{
+				return GetRandomInt(725, 999);
+			}
+		}
+		case 12:
+		{
+			if(index == 133 || index == 444)	// Gunboats or Mantreads
+			{
+				return GetRandomInt(75, 98);
+			}
+			else if(index == 655)	// Spirit of Giving
+			{
+				return GetRandomInt(91, 103);
+			}
+			else
+			{
+				return GetRandomInt(1000, 1499);
+			}
+		}
+		case 13:
+		{
+			if(index == 133 || index == 444)	// Gunboats or Mantreads
+			{
+				return 99;
+			}
+			else if(index == 655)	// Spirit of Giving
+			{
+				return GetRandomInt(104, 119);
+			}
+			else
+			{
+				return GetRandomInt(1500, 1999);
+			}
+		}
+		case 14:
+		{
+			if(index == 133 || index == 444)	// Gunboats or Mantreads
+			{
+				return GetRandomInt(100, 149);
+			}
+			else if(index == 655)	// Spirit of Giving
+			{
+				return GetRandomInt(120, 137);
+			}
+			else
+			{
+				return GetRandomInt(2000, 2749);
+			}
+		}
+		case 15:
+		{
+			if(index == 133 || index == 444)	// Gunboats or Mantreads
+			{
+				return GetRandomInt(150, 249);
+			}
+			else if(index == 655)	// Spirit of Giving
+			{
+				return GetRandomInt(138, 157);
+			}
+			else
+			{
+				return GetRandomInt(2750, 3999);
+			}
+		}
+		case 16:
+		{
+			if(index == 133 || index == 444)	// Gunboats or Mantreads
+			{
+				return GetRandomInt(250, 499);
+			}
+			else if(index == 655)	// Spirit of Giving
+			{
+				return GetRandomInt(158, 178);
+			}
+			else
+			{
+				return GetRandomInt(4000, 5499);
+			}
+		}
+		case 17:
+		{
+			if(index == 133 || index == 444)	// Gunboats or Mantreads
+			{
+				return GetRandomInt(500, 749);
+			}
+			else if(index == 655)	// Spirit of Giving
+			{
+				return GetRandomInt(179, 209);
+			}
+			else
+			{
+				return GetRandomInt(5500, 7499);
+			}
+		}
+		case 18:
+		{
+			if(index == 133 || index == 444)	// Gunboats or Mantreads
+			{
+				return GetRandomInt(750, 783);
+			}
+			else if(index == 655)	// Spirit of Giving
+			{
+				return GetRandomInt(210, 249);
+			}
+			else
+			{
+				return GetRandomInt(7500, 9999);
+			}
+		}
+		case 19:
+		{
+			if(index == 133 || index == 444)	// Gunboats or Mantreads
+			{
+				return GetRandomInt(784, 849);
+			}
+			else if(index == 655)	// Spirit of Giving
+			{
+				return GetRandomInt(250, 299);
+			}
+			else
+			{
+				return GetRandomInt(10000, 14999);
+			}
+		}
+		case 20:
+		{
+			if(index == 133 || index == 444)	// Gunboats or Mantreads
+			{
+				return GetRandomInt(850, 999);
+			}
+			else if(index == 655)	// Spirit of Giving
+			{
+				return GetRandomInt(300, 399);
+			}
+			else
+			{
+				return GetRandomInt(15000, 19999);
+			}
+		}
+		default:
+		{
+			if(index == 133 || index == 444)	// Gunboats or Mantreads
+			{
+				return GetRandomInt(0, 999);
+			}
+			else if(index == 655)	// Spirit of Giving
+			{
+				return GetRandomInt(0, 399);
+			}
+			else
+			{
+				return GetRandomInt(0, 19999);
+			}
+		}
+	}
 }
 
-void GetClassWeaponClassname(TFClassType class, char[] name, int length)
+stock void TF2_RemoveCosmetics(int clientIdx)
 {
-	if(!StrContains(name, "saxxy"))
-	{ 
-		switch(class)
+	int edict = MaxClients + 1;
+	while((edict = FindEntityByClassname(edict, "tf_wearable")) != -1)
+	{
+		char netclass[32];
+		if (GetEntityNetClass(edict, netclass, sizeof(netclass)) && StrEqual(netclass, "CTFWearable"))
 		{
-			case TFClass_Scout:	strcopy(name, length, "tf_weapon_bat");
-			case TFClass_Pyro:	strcopy(name, length, "tf_weapon_fireaxe");
-			case TFClass_DemoMan:	strcopy(name, length, "tf_weapon_bottle");
-			case TFClass_Heavy:	strcopy(name, length, "tf_weapon_fists");
-			case TFClass_Engineer:	strcopy(name, length, "tf_weapon_wrench");
-			case TFClass_Medic:	strcopy(name, length, "tf_weapon_bonesaw");
-			case TFClass_Sniper:	strcopy(name, length, "tf_weapon_club");
-			case TFClass_Spy:	strcopy(name, length, "tf_weapon_knife");
-			default:		strcopy(name, length, "tf_weapon_shovel");
+			if(GetEntPropEnt(edict, Prop_Send, "m_hOwnerEntity") == clientIdx && !GetEntProp(edict, Prop_Send, "m_bDisguiseWearable"))
+			{
+				AcceptEntityInput(edict, "Kill");
+			}
 		}
 	}
 }

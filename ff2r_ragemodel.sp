@@ -1,32 +1,32 @@
 /*
 	"rage_model"	// Ability name can use suffixes
 	{
-		"slot"								"0"														// Ability slot
-		"duration"							"10.0"													// Ability duration
-		"ragemodel"							"models\freak_fortress_2\testboss\test_ragemodel.mdl"	// Rage model path
-		"use class anims on ragemodel"		"true"													// Should we use class animations on ragemodel?
-		"defaultmodel"						"models\freak_fortress_2\testboss\test_model_02.mdl"	// Default model path									(Uses default boss model if Left Blank)
-		"use class anims on defaultmodel"	"true"													// Should we use class animations on defaultmodel?		(Uses default boss class animations if left blank)
+		"slot"								"0"																	// Ability slot
+		"duration"							"10.0"																// Ability duration
+		"ragemodel"							"models\freak_fortress_2\testboss\test_ragemodel.mdl"				// Rage model path
+		"use class anims on ragemodel"		"true"																// Should we use class animations on ragemodel?
+		"defaultmodel"						"models\freak_fortress_2\testboss\test_model_02.mdl"				// Default model path									(Uses default boss model if Left Blank)
+		"use class anims on defaultmodel"	"true"																// Should we use class animations on defaultmodel?		(Uses default boss class animations if left blank)
 		
-		"plugin_name"	"ff2r_ragemodel"
+		"plugin_name"						"ff2r_ragemodel"
 	}
 	
 	// Unlimited argument count, if ability activated more than argument count; keeps the last model
 	"phase_model"	// Ability name can use suffixes
 	{
-		"slot"							"-1"																// Ability slot
-		"phase1 model"					"models\freak_fortress_2\testboss\test_angrymodel_01.mdl"			// Phase one model path
-		"use class anims on phase1"		"true"																// Should we use class animations on phase1?
-		"phase2 model"					"models\freak_fortress_2\testboss\test_angrymodel_01.mdl"			// Phase two model path
-		"use class anims on phase2"		"true"																// Should we use class animations on phase2?
-		"phase3 model"					"models\freak_fortress_2\testboss\test_superangrymodel_01.mdl"		// Phase three model path
-		"use class anims on phase3"		"true"																// Should we use class animations on phase3?
-		"phase4 model"					"models\freak_fortress_2\testboss\test_superangrymodel_02.mdl"		// Phase four model path
-		"use class anims on phase4"		"true"																// Should we use class animations on phase4?
-		"phaseX model"					""																				
-		"use class anims on phaseX"		""
+		"slot"								"-1"																// Ability slot
+		"phase1 model"						"models\freak_fortress_2\testboss\test_angrymodel_01.mdl"			// Phase one model path
+		"use class anims on phase1"			"true"																// Should we use class animations on phase1?
+		"phase2 model"						"models\freak_fortress_2\testboss\test_angrymodel_01.mdl"			// Phase two model path
+		"use class anims on phase2"			"true"																// Should we use class animations on phase2?
+		"phase3 model"						"models\freak_fortress_2\testboss\test_superangrymodel_01.mdl"		// Phase three model path
+		"use class anims on phase3"			"true"																// Should we use class animations on phase3?
+		"phase4 model"						"models\freak_fortress_2\testboss\test_superangrymodel_02.mdl"		// Phase four model path
+		"use class anims on phase4"			"true"																// Should we use class animations on phase4?
+		"phaseX model"						""																				
+		"use class anims on phaseX"			""
 		
-		"plugin_name"	"ff2r_ragemodel"
+		"plugin_name"						"ff2r_ragemodel"
 	}
 */
 
@@ -50,9 +50,7 @@
 #define STABLE_REVISION "0"
 #define PLUGIN_VERSION 	MAJOR_REVISION..."."...MINOR_REVISION..."."...STABLE_REVISION
 
-#define PLUGIN_URL ""
-
-#define MAXTF2PLAYERS	36
+#define MAXTF2PLAYERS	MAXPLAYERS+1
 
 int ModelCount[MAXTF2PLAYERS] = { 0, 0, 0, ...};
 Handle ModelTimer[MAXTF2PLAYERS];
@@ -63,7 +61,6 @@ public Plugin myinfo =
 	author 		= PLUGIN_AUTHOR,
 	description	= PLUGIN_DESC,
 	version 	= PLUGIN_VERSION,
-	url			= PLUGIN_URL,
 };
 
 public void OnPluginEnd()
