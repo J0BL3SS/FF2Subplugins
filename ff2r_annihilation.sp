@@ -63,9 +63,7 @@
 #define STABLE_REVISION "3"
 #define PLUGIN_VERSION 	MAJOR_REVISION..."."...MINOR_REVISION..."."...STABLE_REVISION
 
-#define PLUGIN_URL ""
-
-#define MAXTF2PLAYERS	36
+#define MAXTF2PLAYERS	MAXPLAYERS+1
 
 int BeamEntity[MAXTF2PLAYERS][MAXTF2PLAYERS];
 float g_flDamageAccumulated[MAXTF2PLAYERS];
@@ -76,14 +74,12 @@ float ION_Position[MAXTF2PLAYERS][3];
 
 float OFF_THE_MAP[3] = {16383.0, 16383.0, -16383.0};	// Kill without mayhem
 
-
 public Plugin myinfo = 
 {
 	name 		= PLUGIN_NAME,
 	author 		= PLUGIN_AUTHOR,
 	description	= PLUGIN_DESC,
 	version 	= PLUGIN_VERSION,
-	url			= PLUGIN_URL,
 };
 
 public void OnPluginStart()

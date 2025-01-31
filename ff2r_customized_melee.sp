@@ -17,13 +17,13 @@
 		"blue"					"255"							// Weapon blue
 		"class"					""								// Override class setup
 		
-		"weapon duration"		"10.0"							// Duration before weapon decays
+		"weapon duration"		"5.0"							// Duration before weapon decays
 		"remove on hit"			"true"							// Remove weapon upon landing a hit
 		
-		"do slot on hit low"	"11"					// Activate a slot upon landing a hit
-		"do slot on hit high"	"11"					// Activate a slot upon landing a hit
+		"do slot on hit low"	"11"					        // Activate a slot upon landing a hit
+		"do slot on hit high"	"11"					        // Activate a slot upon landing a hit
 		
-		"plugin_name"	"ff2r_customized_melee"
+		"plugin_name"	        "ff2r_customized_melee"
 	}
 */
 
@@ -53,9 +53,7 @@
 #define STABLE_REVISION "3"
 #define PLUGIN_VERSION 	MAJOR_REVISION..."."...MINOR_REVISION..."."...STABLE_REVISION
 
-#define PLUGIN_URL ""
-
-#define MAXTF2PLAYERS	36
+#define MAXTF2PLAYERS	MAXPLAYERS+1
 
 int PlayersAlive[4];
 bool SpecTeam;
@@ -76,7 +74,6 @@ public Plugin myinfo =
 	author 		= PLUGIN_AUTHOR,
 	description	= PLUGIN_DESC,
 	version 	= PLUGIN_VERSION,
-	url			= PLUGIN_URL,
 };
 
 public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max)
@@ -427,7 +424,23 @@ void Rage_NewWeapon(int client, ConfigData cfg, const char[] ability, bool reset
 		{
 			CreateTimer(cfg.GetFloat("weapon duration"), Timer_RestoreWeapon, GetClientUserId(client), TIMER_FLAG_NO_MAPCHANGE);
 		}
-			
+		
+ 		int victims;
+		int[] victim = new int[MaxClients - 1];
+		for(int target = 1; target <= MaxClients; target++)
+		{
+			if(IsValidClient(target))
+			{	
+				victim[victims++] = target;
+			}
+		}
+		
+		if(victims)
+		{
+			char buffer[128];
+			Format(buffer, sizeof(buffer), "sound_hit_%s", ability);
+			FF2R_EmitBossSound(victim, victims, buffer, client);
+		}		
 	}
 	
 	if(forceClass != TFClass_Unknown)

@@ -65,9 +65,7 @@
 #define STABLE_REVISION "0"
 #define PLUGIN_VERSION 	MAJOR_REVISION..."."...MINOR_REVISION..."."...STABLE_REVISION
 
-#define PLUGIN_URL ""
-
-#define MAXTF2PLAYERS	36
+#define MAXTF2PLAYERS	MAXPLAYERS+1
 
 int FOG_EntityIndex = -1;
 bool IsFogActive = false;
@@ -82,7 +80,6 @@ public Plugin myinfo =
 	author 		= PLUGIN_AUTHOR,
 	description	= PLUGIN_DESC,
 	version 	= PLUGIN_VERSION,
-	url			= PLUGIN_URL,
 };
 
 public void OnPluginStart()

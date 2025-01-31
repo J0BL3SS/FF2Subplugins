@@ -1,5 +1,40 @@
 /*
-
+	"rage_tornado"	                                    
+	{
+		"slot"					"0"						
+		
+		"range"				    "128.0"					
+		"ignore invuln"		    "false"					
+		"damage per tick"	    "0.2"					
+		"duration"				"1.0"					
+		
+		"plugin_name"	        "ff2r_bones"
+	}
+	
+	"rage_mortis"	                                                                            
+	{
+		"slot"					"0"				                                                
+		
+		"model"				    "models/props_halloween/hammer_mechanism.mdl"					
+		"damage"		        "500.0"					                                        
+		"range"	                "512.0"					                                        
+		"duration"				"8.0"					                                        
+		
+		"plugin_name"	        "ff2r_bones"
+	}
+	
+	"rage_calcium_repossession"	                        
+	{
+		"slot"					"0"						
+		
+		"stun duration"         "3.0"					
+		"effect range"		    "512.0"					
+		"effect damage"	        "-1.0"					 
+		"spawn skeletons"	    "false"					
+		"effect duration"	    "8.0"					
+		
+		"plugin_name"	        "ff2r_bones"
+	}
 */
 
 #include <sourcemod>
@@ -13,7 +48,7 @@
 #pragma semicolon 1
 #pragma newdecls required
 
-#define PLUGIN_NAME 	"Freak Fortress 2 Rewrite: Spookmaster Jr's Abilities'"
+#define PLUGIN_NAME 	"Freak Fortress 2 Rewrite: Spookmaster Jr's Abilities"
 #define PLUGIN_AUTHOR 	"J0BL3SS"
 #define PLUGIN_DESC 	"Bad to the Bone"
 
@@ -22,12 +57,10 @@
 #define STABLE_REVISION "0"
 #define PLUGIN_VERSION 	MAJOR_REVISION..."."...MINOR_REVISION..."."...STABLE_REVISION
 
-#define PLUGIN_URL ""
+#define MAXTF2PLAYERS   MAXPLAYERS+1
 
-#define MAXTF2PLAYERS	36
-
-#define SPRITE_BEAM "materials/sprites/lgtning.vmt"
-#define SPRITE_HALO "materials/sprites/halo01.vmt"
+#define SPRITE_BEAM 	"materials/sprites/lgtning.vmt"
+#define SPRITE_HALO 	"materials/sprites/halo01.vmt"
 
 /*
  *	Defines: rage_tornado
@@ -79,7 +112,6 @@ public Plugin myinfo =
 	author 		= PLUGIN_AUTHOR,
 	description	= PLUGIN_DESC,
 	version 	= PLUGIN_VERSION,
-	url			= PLUGIN_URL,
 };
 
 public void OnPluginStart()
