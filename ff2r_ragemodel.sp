@@ -3,9 +3,9 @@
 	{
 		"slot"								"0"																	// Ability slot
 		"duration"							"10.0"																// Ability duration
-		"ragemodel"							"models\freak_fortress_2\testboss\test_ragemodel.mdl"				// Rage model path
+		"ragemodel"							"models/freak_fortress_2/testboss/test_ragemodel.mdl"				// Rage model path
 		"use class anims on ragemodel"		"true"																// Should we use class animations on ragemodel?
-		"defaultmodel"						"models\freak_fortress_2\testboss\test_model_02.mdl"				// Default model path									(Uses default boss model if Left Blank)
+		"defaultmodel"						"models/freak_fortress_2/testboss/test_model_02.mdl"				// Default model path									(Uses default boss model if Left Blank)
 		"use class anims on defaultmodel"	"true"																// Should we use class animations on defaultmodel?		(Uses default boss class animations if left blank)
 		
 		"plugin_name"						"ff2r_ragemodel"
@@ -15,13 +15,13 @@
 	"phase_model"	// Ability name can use suffixes
 	{
 		"slot"								"-1"																// Ability slot
-		"phase1 model"						"models\freak_fortress_2\testboss\test_angrymodel_01.mdl"			// Phase one model path
+		"phase1 model"						"models/freak_fortress_2/testboss/test_angrymodel_01.mdl"			// Phase one model path
 		"use class anims on phase1"			"true"																// Should we use class animations on phase1?
-		"phase2 model"						"models\freak_fortress_2\testboss\test_angrymodel_01.mdl"			// Phase two model path
+		"phase2 model"						"models/freak_fortress_2/testboss/test_angrymodel_01.mdl"			// Phase two model path
 		"use class anims on phase2"			"true"																// Should we use class animations on phase2?
-		"phase3 model"						"models\freak_fortress_2\testboss\test_superangrymodel_01.mdl"		// Phase three model path
+		"phase3 model"						"models/freak_fortress_2/testboss/test_superangrymodel_01.mdl"		// Phase three model path
 		"use class anims on phase3"			"true"																// Should we use class animations on phase3?
-		"phase4 model"						"models\freak_fortress_2\testboss\test_superangrymodel_02.mdl"		// Phase four model path
+		"phase4 model"						"models/freak_fortress_2/testboss/test_superangrymodel_02.mdl"		// Phase four model path
 		"use class anims on phase4"			"true"																// Should we use class animations on phase4?
 		"phaseX model"						""																				
 		"use class anims on phaseX"			""
